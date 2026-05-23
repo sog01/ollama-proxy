@@ -39,6 +39,7 @@ install_macos() {
   have python3 || pkgs+=(python@3.11)
   have git || pkgs+=(git)
   have curl || pkgs+=(curl)
+  have vim || pkgs+=(vim)
   if [ "${#pkgs[@]}" -gt 0 ]; then
     log "brew install ${pkgs[*]}"
     brew install "${pkgs[@]}"
@@ -53,6 +54,7 @@ install_ubuntu() {
   have pip3 || pkgs+=(python3-pip)
   have git || pkgs+=(git)
   have curl || pkgs+=(curl)
+  have vim || pkgs+=(vim)
   if [ "${#pkgs[@]}" -gt 0 ]; then
     log "apt-get install ${pkgs[*]}"
     $SUDO apt-get update
