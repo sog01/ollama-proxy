@@ -73,19 +73,40 @@ if curl -sf http://localhost:11434/api/version >/dev/null 2>&1; then
   log "local Ollama responding on :11434"
 
   # Pre-pull default models. Skip failing ones (network, name change) — don't abort bootstrap.
+  PRIMARY_MODEL="glm-4.7-flash"
   MODELS=(
-    "glm-4.7-flash"           # user-requested
+    "$PRIMARY_MODEL"          # user-requested primary
     "qwen2.5-coder:7b"        # strong coding model, Alibaba
     "deepseek-coder-v2:16b"   # strong coding model, DeepSeek (MoE lite)
   )
+  PRIMARY_READY=0
   for m in "${MODELS[@]}"; do
     if ollama list 2>/dev/null | awk 'NR>1 {print $1}' | grep -qx "$m"; then
       log "model present: $m"
+      [ "$m" = "$PRIMARY_MODEL" ] && PRIMARY_READY=1
     else
       log "ollama pull $m"
-      ollama pull "$m" || warn "pull failed for $m — skipping"
+      if ollama pull "$m"; then
+        [ "$m" = "$PRIMARY_MODEL" ] && PRIMARY_READY=1
+      else
+        warn "pull failed for $m — skipping"
+      fi
     fi
   done
+
+  # Warm up primary model: empty-prompt /api/generate loads weights into memory.
+  # keep_alive=30m keeps it resident so the first real request is fast.
+  if [ "$PRIMARY_READY" -eq 1 ]; then
+    log "warming up $PRIMARY_MODEL (keep_alive=30m)"
+    if curl -sf -X POST http://localhost:11434/api/generate \
+        -H "Content-Type: application/json" \
+        -d "{\"model\":\"$PRIMARY_MODEL\",\"prompt\":\"\",\"keep_alive\":\"30m\"}" \
+        >/dev/null; then
+      log "$PRIMARY_MODEL warm and resident"
+    else
+      warn "warmup request failed for $PRIMARY_MODEL"
+    fi
+  fi
 else
   warn "ollama installed but not reachable at http://localhost:11434 — start it before running ai-inference (model pulls skipped)"
 fi
