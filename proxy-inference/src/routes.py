@@ -32,7 +32,7 @@ async def _read_json(req: Request) -> dict[str, Any]:
 async def _forward(path: str, method: str, body: dict[str, Any]) -> Any:
     """Forward a request to a node. Returns a StreamingResponse or JSONResponse."""
     model = body.get("model") if isinstance(body, dict) else None
-    stream = bool(body.get("stream", path in ("/api/generate", "/api/chat")))
+    stream = bool(body.get("stream", path in ("/api/generate", "/api/chat", "/api/pull")))
 
     node = registry.pick_node(model)
     if node is None:
@@ -191,6 +191,12 @@ async def api_generate(req: Request) -> Any:
 async def api_chat(req: Request) -> Any:
     body = await _read_json(req)
     return await _forward("/api/chat", "POST", body)
+
+
+@router.post("/api/pull")
+async def api_pull(req: Request) -> Any:
+    body = await _read_json(req)
+    return await _forward("/api/pull", "POST", body)
 
 
 @router.post("/api/embeddings")
