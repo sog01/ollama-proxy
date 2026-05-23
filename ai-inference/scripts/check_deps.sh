@@ -76,8 +76,8 @@ if curl -sf http://localhost:11434/api/version >/dev/null 2>&1; then
   PRIMARY_MODEL="glm-4.7-flash"
   MODELS=(
     "$PRIMARY_MODEL"          # user-requested primary
-    "qwen2.5-coder:7b"        # strong coding model, Alibaba
-    "deepseek-coder-v2:16b"   # strong coding model, DeepSeek (MoE lite)
+    "gemma4:26b"              # Google Gemma 4, 26B
+    "qwen3.6:27b"             # Alibaba Qwen 3.6, 27B
   )
   PRIMARY_READY=0
   for m in "${MODELS[@]}"; do
