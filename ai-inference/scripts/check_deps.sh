@@ -11,7 +11,62 @@ case "$OS" in
   *) echo "[err] Unsupported OS: $OS (macOS/Ubuntu only)" >&2; exit 1;;
 esac
 
-log() { printf "\033[1;34m[ai-inference]\033[0m %s\n" "$*"; }
+log()  { printf "\033[1;34m[ai-inference]\033[0m %s\n" "$*"; }
+warn() { printf "\033[1;33m[ai-inference]\033[0m %s\n" "$*"; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+install_zstd() {
+  if have zstd; then
+    log "zstd present"
+    return
+  fi
+  case "$OS" in
+    Darwin)
+      if ! have brew; then
+        echo "[err] Homebrew required to install zstd on macOS. https://brew.sh" >&2
+        exit 1
+      fi
+      log "brew install zstd"
+      brew install zstd
+      ;;
+    Linux)
+      log "apt-get install zstd"
+      sudo apt-get update
+      sudo apt-get install -y zstd
+      ;;
+  esac
+}
+
+install_ollama() {
+  if have ollama; then
+    log "ollama CLI present"
+    return
+  fi
+  case "$OS" in
+    Darwin)
+      if ! have brew; then
+        echo "[err] Homebrew required to install ollama on macOS. https://brew.sh" >&2
+        exit 1
+      fi
+      log "brew install ollama"
+      brew install ollama
+      ;;
+    Linux)
+      log "curl https://ollama.com/install.sh | sh"
+      curl -fsSL https://ollama.com/install.sh | sh
+      ;;
+  esac
+}
+
+# Ollama needs zstd for model decompression. Install zstd first, then ollama.
+install_zstd
+install_ollama
+
+if curl -sf http://localhost:11434/api/version >/dev/null 2>&1; then
+  log "local Ollama responding on :11434"
+else
+  warn "ollama installed but not reachable at http://localhost:11434 — start it before running ai-inference"
+fi
 
 if [ ! -d venv ]; then
   log "Creating venv"

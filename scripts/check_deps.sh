@@ -80,18 +80,6 @@ if ! py_min_ok; then
 fi
 log "python3 $(python3 -V 2>&1 | awk '{print $2}') ok"
 
-# Optional: ollama check (warn only)
-if have ollama; then
-  log "ollama CLI present"
-  if curl -sf http://localhost:11434/api/version >/dev/null 2>&1; then
-    log "local Ollama responding on :11434"
-  else
-    warn "ollama installed but not reachable at http://localhost:11434"
-  fi
-else
-  warn "ollama CLI not found. Install from https://ollama.com if you plan to run an AI node here."
-fi
-
 # Delegate to per-service bootstrap
 log "Bootstrapping proxy-inference"
 "$ROOT_DIR/proxy-inference/scripts/check_deps.sh"
