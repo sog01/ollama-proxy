@@ -15,6 +15,13 @@ log()  { printf "\033[1;34m[ai-inference]\033[0m %s\n" "$*"; }
 warn() { printf "\033[1;33m[ai-inference]\033[0m %s\n" "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
 
+# Use sudo only if not root AND sudo exists. Root containers often lack sudo.
+if [ "$(id -u)" -eq 0 ] || ! have sudo; then
+  SUDO=""
+else
+  SUDO="sudo"
+fi
+
 install_zstd() {
   if have zstd; then
     log "zstd present"
@@ -31,8 +38,8 @@ install_zstd() {
       ;;
     Linux)
       log "apt-get install zstd"
-      sudo apt-get update
-      sudo apt-get install -y zstd
+      $SUDO apt-get update
+      $SUDO apt-get install -y zstd
       ;;
   esac
 }

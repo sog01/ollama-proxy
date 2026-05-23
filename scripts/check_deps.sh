@@ -12,6 +12,13 @@ err() { printf "\033[1;31m[err]\033[0m %s\n" "$*" 1>&2; }
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
+# Use sudo only if not root AND sudo exists. Root containers often lack sudo.
+if [ "$(id -u)" -eq 0 ] || ! have sudo; then
+  SUDO=""
+else
+  SUDO="sudo"
+fi
+
 py_min_ok() {
   # require python3 >= 3.10
   local v
@@ -48,8 +55,8 @@ install_ubuntu() {
   have curl || pkgs+=(curl)
   if [ "${#pkgs[@]}" -gt 0 ]; then
     log "apt-get install ${pkgs[*]}"
-    sudo apt-get update
-    sudo apt-get install -y "${pkgs[@]}"
+    $SUDO apt-get update
+    $SUDO apt-get install -y "${pkgs[@]}"
   fi
 }
 
