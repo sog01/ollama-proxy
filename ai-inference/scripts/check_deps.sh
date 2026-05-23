@@ -71,8 +71,23 @@ install_ollama
 
 if curl -sf http://localhost:11434/api/version >/dev/null 2>&1; then
   log "local Ollama responding on :11434"
+
+  # Pre-pull default models. Skip failing ones (network, name change) — don't abort bootstrap.
+  MODELS=(
+    "glm-4.7-flash"           # user-requested
+    "qwen2.5-coder:7b"        # strong coding model, Alibaba
+    "deepseek-coder-v2:16b"   # strong coding model, DeepSeek (MoE lite)
+  )
+  for m in "${MODELS[@]}"; do
+    if ollama list 2>/dev/null | awk 'NR>1 {print $1}' | grep -qx "$m"; then
+      log "model present: $m"
+    else
+      log "ollama pull $m"
+      ollama pull "$m" || warn "pull failed for $m — skipping"
+    fi
+  done
 else
-  warn "ollama installed but not reachable at http://localhost:11434 — start it before running ai-inference"
+  warn "ollama installed but not reachable at http://localhost:11434 — start it before running ai-inference (model pulls skipped)"
 fi
 
 if [ ! -d venv ]; then
